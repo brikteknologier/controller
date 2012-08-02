@@ -3,6 +3,9 @@ a small structural aid for creating express routes.
 
 ## example
 
+This code sets up an app with 3 handlers, 4 routes, and some middleware which
+applies to different handler groups.
+
 ```javascript
 var express = require('express');
 var controller = require('controller');
