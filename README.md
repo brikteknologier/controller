@@ -39,6 +39,8 @@ users.attach(app);
 * [direct](#direct) - directly route a handler function
 * [attach](#attach) - attach to express
 
+---
+
 <a name="constructor"/>
 ### Create a new controller
 
@@ -56,6 +58,8 @@ options are:
 * `prefix` a path to prefix all routes by. For example, you could set this to
   `'/user/'`, resulting in `users.route('get', 'login', 'do-login');` routing to
   `/user/login`. 
+
+---
 
 <a name="define"/>
 ### define(name, [groups], handler)
@@ -83,6 +87,8 @@ users.define('edit', ['require-login'], function(req, res) {
 });
 ```
 
+---
+
 <a name="middleware"/>
 ### middleware([group, [middleware]])
 
@@ -106,6 +112,8 @@ users.middleware('require-login'); // -> [ [Function checkLoggedIn] ]
 users.middleware(function(res, req, next) {});
 ```
 
+---
+
 <a name="route"/>
 ### route(method, path, handlerName)
 
@@ -123,6 +131,8 @@ users.route('get', '/user/:id', 'view');
 users.route('post', '/user/:id', 'create');
 users.route('put', '/user/:id', 'edit');
 ```
+
+---
 
 <a name="direct"/>
 ### direct(method, path, [middleware/groups...,] handlerfn)
@@ -151,6 +161,8 @@ users.direct('delete', '/user/:id', uselessMiddleware, 'require-login', function
 
 users.direct('get', '/user/do-something', function(req, res) {});
 ```
+
+---
 
 <a name="attach"/>
 ### attach(expressApp)
