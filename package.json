@@ -1,0 +1,16 @@
+{
+  "name": "controller",
+  "version": "0.1.0",
+  "description": "an action controller for express",
+  "main": "lib/controller.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha -R spec"
+  },
+  "license": "BSD",
+  "devDependencies": {
+    "mocha":"*"
+  }
+}
