@@ -106,7 +106,11 @@ users.define('edit', ['require-login'], function(req, res) {
 ### middleware([group, [middleware]])
 
 Define some middleware for a group. If `middleware` is not defined, an array of 
-middleware for the group is returned instead.
+middleware for the group is returned instead. If `group` is not defined,
+the `'all'` group is returned - this is a group of middleware which applies to
+all handlers.
+
+The array that is returned can also be used to add more middleware.
 
 The order that middleware is added is as follows:
 
@@ -127,6 +131,7 @@ users.middleware('require-login', function checkLoggedIn(req, res, next) {
 });
 
 users.middleware('require-login'); // -> [ [Function checkLoggedIn] ]
+users.middleware('require-login').push(function(req,res,next) {});
 
 // Define some middleware for all routes
 users.middleware(function(res, req, next) {});
