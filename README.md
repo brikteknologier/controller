@@ -108,6 +108,13 @@ users.define('edit', ['require-login'], function(req, res) {
 Define some middleware for a group. If `middleware` is not defined, an array of 
 middleware for the group is returned instead.
 
+The order that middleware is added is as follows:
+
+1. Controller-wide middleware under the 'all' group.
+2. Group middleware, in the order the middleware was added, in the order the
+   groups were specified when the handler was defined.
+3. Handler-specific middleware that was defined only for this handler.
+
 __Paramaters__
 * `group` *optional* - defaults to `'all'`
 * `middleware` *optional* - middleware to add to `group`.
