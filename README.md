@@ -62,6 +62,16 @@ options are:
   `'/user/'`, resulting in `users.route('get', 'login', 'do-login');` routing to
   `/user/login`. 
 
+Example with options:
+
+```javascript
+var users = controller({ prefix: '/user/' });
+
+users.direct('get', '/:id', function(req,res) {
+  res.send(Users.read(req.params.id));
+})
+```
+
 ---
 
 <a name="define"/>
