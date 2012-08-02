@@ -55,7 +55,7 @@ var controller = require('controller');
 var users = controller();
 ```
 
-The `Controller` function can also take an `options` paramete. Available
+The `Controller` function can also take an `options` parameter. Available
 options are:
 
 * `prefix` a path to prefix all routes by. For example, you could set this to
@@ -193,5 +193,5 @@ users.direct('get', '/user/do-something', function(req, res) {});
 ### attach(expressApp)
 
 Attach the routes to an express app. Note that after calling this function,
-making changes to the routes the controller will do nothing.
+making changes to the routes on the controller will do nothing.
 
