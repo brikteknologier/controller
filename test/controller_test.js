@@ -51,6 +51,32 @@ describe('Controller', function() {
       c.attach(anapp);
       assert(didCall === true);
     })
+    it('should allow more than one direct attachment', function() {
+      var c = ctrl();
+      var fn = function() {}
+      var fn2 = function() {}
+      var fn3 = function() {}
+      var fn4 = function() {}
+      c.direct('get', '/action', fn3, fn);
+      c.direct('post', '/action2', fn4, fn2);
+      var anapp = app();
+      var didCall = 0;
+      anapp.on('get', function(route, mw, theAction) {
+        assert(fn === theAction);
+        assert(route === '/action');
+        assert.deepEqual(mw, [fn3]);
+        didCall++;
+      });
+      anapp.on('post', function(route, mw, theAction) {
+        assert(fn2 === theAction);
+        assert(route === '/action2');
+        assert.deepEqual(mw, [fn4]);
+        didCall++;
+      });
+
+      c.attach(anapp);
+      assert(didCall === 2);
+    })
     it('should allow direct attachment mixing groups and fns', function() {
       var c = ctrl();
       var fn = function() {};
