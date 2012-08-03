@@ -1,6 +1,6 @@
 {
   "name": "controller",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "an action controller for express",
   "main": "lib/controller.js",
   "directories": {
@@ -11,6 +11,6 @@
   },
   "license": "BSD",
   "devDependencies": {
-    "mocha":"*"
+    "mocha": "*"
   }
 }
