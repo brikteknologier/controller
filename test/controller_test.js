@@ -35,6 +35,23 @@ describe('Controller', function() {
     c.attach(anapp);
     assert(didCall === true);
   });
+  it('should route with a prefix', function() {
+    var c = ctrl({prefix: '/prefix/'});
+    var action = function someAction(){};
+    var doThing = function thing(){};
+    c.define('action', ['thing'], action);
+    c.route('GET', '/action', 'action');
+
+    var anapp = app();
+    var didCall = false;
+    anapp.on('get', function(route, mw, theAction) {
+      assert(route === '/prefix/action');
+      didCall = true;
+    });
+
+    c.attach(anapp);
+    assert(didCall === true);
+  });
   describe('direct()', function() {
     it('should allow direct attachment', function() {
       var c = ctrl();
