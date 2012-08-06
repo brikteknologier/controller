@@ -59,7 +59,7 @@ describe('Controller', function() {
       c.direct('get', '/action', fn);
       var anapp = app();
       var didCall = false;
-      anapp.on('get', function(route, mw, theAction) {
+      anapp.on('get', function(route, theAction) {
         assert(fn === theAction);
         assert(route === '/action');
         didCall = true;
