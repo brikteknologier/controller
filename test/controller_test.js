@@ -1,6 +1,18 @@
 var assert = require('assert');
 var ctrl = require('../');
-var app = require('./app_mock');
+var express = require('express');
+var req = require('supertest');
+
+var makemw = function(str) {
+  return function(req,res,next) { 
+    req.string = (req.string || '') + str;
+    next();
+  };
+}
+
+var routestr = function(string) {
+  return function(req,res) { res.end(req.string || string); };
+}
 
 describe('Controller', function() {
   it('should receive an action with no groups', function() {
@@ -19,100 +31,68 @@ describe('Controller', function() {
     assert(Array.isArray(c.actions['someAction'].groups));
     assert.deepEqual(c.actions['someAction'].groups, ['something', 'else']);
   });
-  it('should call the right routing functions', function() {
+  it('should create a route', function(done) {
     var c = ctrl();
-    var action = function someAction(){};
-    var doThing = function thing(){};
-    c.define('action', ['thing'], action);
+    c.define('action', ['thing'], routestr('test'));
     c.route('GET', '/action', 'action');
-
-    var anapp = app();
-    var didCall = false;
-    anapp.on('get', function(route, mw, theAction) {
-      didCall = true;
-    });
-
-    c.attach(anapp);
-    assert(didCall === true);
+    
+    req(express().use(c))
+      .get('/action')
+      .expect(200)
+      .expect('test')
+      .end(done);
   });
   it('should route with a prefix', function() {
     var c = ctrl({prefix: '/prefix/'});
-    var action = function someAction(){};
-    var doThing = function thing(){};
-    c.define('action', ['thing'], action);
+    c.define('action', ['thing'], routestr('test'));
     c.route('GET', '/action', 'action');
 
-    var anapp = app();
-    var didCall = false;
-    anapp.on('get', function(route, mw, theAction) {
-      assert(route === '/prefix/action');
-      didCall = true;
-    });
-
-    c.attach(anapp);
-    assert(didCall === true);
+    req(express().use(c))
+      .get('/prefix/action')
+      .expect(200)
+      .expect('test')
+      .end(done);
   });
   describe('direct()', function() {
     it('should allow direct attachment', function() {
       var c = ctrl();
-      var fn = function() {}
-      c.direct('get', '/action', fn);
-      var anapp = app();
-      var didCall = false;
-      anapp.on('get', function(route, theAction) {
-        assert(fn === theAction);
-        assert(route === '/action');
-        didCall = true;
-      });
+      c.direct('get', '/action', routestr('test'));
 
-      c.attach(anapp);
-      assert(didCall === true);
+      req(express().use(c))
+        .get('/action')
+        .expect(200)
+        .expect('test')
+        .end(done);
     })
     it('should allow more than one direct attachment', function() {
       var c = ctrl();
-      var fn = function() {}
-      var fn2 = function() {}
-      var fn3 = function() {}
-      var fn4 = function() {}
-      c.direct('get', '/action', fn3, fn);
-      c.direct('post', '/action2', fn4, fn2);
-      var anapp = app();
-      var didCall = 0;
-      anapp.on('get', function(route, mw, theAction) {
-        assert(fn === theAction);
-        assert(route === '/action');
-        assert.deepEqual(mw, [fn3]);
-        didCall++;
-      });
-      anapp.on('post', function(route, mw, theAction) {
-        assert(fn2 === theAction);
-        assert(route === '/action2');
-        assert.deepEqual(mw, [fn4]);
-        didCall++;
-      });
-
-      c.attach(anapp);
-      assert(didCall === 2);
+      c.direct('get', '/action', makemw('getact'), routestr('1'));
+      c.direct('post', '/other', makemw('get2'), routestr('2'));
+      
+      var app = express().use(c)
+      req(app)
+        .get('/action')
+        .expect(200)
+        .expect('getact')
+        .end(function(err) {
+          if (err) return done(err);
+          req(app)
+            .get('/other')
+            .expect(200)
+            .expect('get2')
+            .end(done);
+        });
     })
     it('should allow direct attachment mixing groups and fns', function() {
       var c = ctrl();
-      var fn = function() {};
-      var fn1 = function() {};
-      var fn2 = function() {};
-      var fn3 = function() {};
-      c.middleware('gr1', fn1);
-      c.middleware('gr2', fn2);
-      c.direct('get', '/action', 'gr1', fn3, 'gr2', fn);
-      var anapp = app();
-      var didCall = false;
-      anapp.on('get',  function(route, mw, theAction) {
-        assert.deepEqual(mw, [fn1, fn2, fn3])
-        assert(theAction === fn)
-        didCall = true;
-      });
-
-      c.attach(anapp);
-      assert(didCall === true);
+      c.middleware('gr1', makemw('1mw'));
+      c.middleware('gr2', makemw('2mw'));
+      c.direct('get', '/action', 'gr1', makemw('imw'), 'gr2', routestr('str'));
+      req(express().use(c))
+        .get('/action')
+        .expect(200)
+        .expect('1mwimw2mw')
+        .end(done);
     })
   }); 
   describe('middleware()', function() {
@@ -120,102 +100,64 @@ describe('Controller', function() {
       assert(Array.isArray(ctrl().middleware()));
       var c = ctrl();
       var fn = function() {};
-      c.middleware().push(fn);
+      c.middleware(fn)
       assert.deepEqual(c.middleware(), [fn]);
     });
     it('should allow for groups', function() {
       var c = ctrl();
       var fn = function() {}
-      c.middleware('group').push(fn);
+      c.middleware('group', fn)
       assert.deepEqual(c.middleware('group'), [fn]);
     })
-    it('should allow middleware to be added directly', function() {
+    it('should apply grouped middleware', function() {
       var c = ctrl();
-      var fn = function() {}
-      c.middleware('group', fn);
-      assert.deepEqual(c.middleware('group'), [fn]);
-
-      c = ctrl();
-      c.middleware(fn);
-      assert.deepEqual(c.middleware(), [fn]);
-    })
-    it('should apply grouped middleware at attach', function() {
-      var c = ctrl();
-      var action = function someAction(){};
-      var doThing = function thing(){};
-      c.define('action', ['thing'], action);
-      c.middleware('thing').push(doThing);
+      c.define('action', ['thing'], routestr('thing'));
+      c.middleware('thing', makemw('thingmw'));
       c.route('get', '/action', 'action');
 
-      var anapp = app();
-      var didCall = false;
-      anapp.on('get', function(route, mw, theAction) {
-        assert(route === '/action');
-        assert.deepEqual(mw, [doThing]);
-        assert(action === theAction);
-        didCall = true;
-      });
-
-      c.attach(anapp);
-      assert(didCall === true);
+      req(express().use(c))
+        .get('/action')
+        .expect(200)
+        .expect('thingmw')
+        .end(done);
     });
-    it('should apply global middleware at attach', function() {
+    it('should apply global middleware', function() {
       var c = ctrl();
-      var action = function someAction(){};
-      var doThing = function thing(){};
-      c.define('action', ['thing'], action);
-      c.middleware(doThing);
+      c.define('action', ['thing'], routestr('string'));
+      c.middleware(makemw('otherthing'));
       c.route('get', '/action', 'action');
 
-      var anapp = app();
-      var didCall = false;
-      anapp.on('get', function(route, mw, theAction) {
-        assert.deepEqual(mw, [doThing]);
-        didCall = true;
-      });
-
-      c.attach(anapp);
-      assert(didCall === true);
+      req(express().use(c))
+        .get('/action')
+        .expect(200)
+        .expect('otherthing')
+        .end(done);
     });
-    it('should apply handler specific middleware at attach', function() {
+    it('should apply handler specific middleware', function() {
       var c = ctrl();
-      var action = function someAction(){};
-      var doThing = function thing(){};
-      c.define('action', ['thing'], action);
-      c.middleware('action', doThing);
+      c.define('action', ['thing'], routestr('string'));
+      c.middleware('action', makemw('thingy'));
       c.route('get', '/action', 'action');
 
-      var anapp = app();
-      var didCall = false;
-      anapp.on('get', function(route, mw, theAction) {
-        assert.deepEqual(mw, [doThing]);
-        didCall = true;
-      });
-
-      c.attach(anapp);
-      assert(didCall === true);
+      req(express().use(c))
+        .get('/action')
+        .expect(200)
+        .expect('thingy')
+        .end(done);
     });
     it('should apply middleware in the correct order', function() {
       var c = ctrl();
-      var action = function someAction(){};
-      var doThing1 = function thing1(){};
-      var doThing2 = function thing2(){};
-      var doThing3 = function thing3(){};
-      c.define('action', ['thing'], action);
-      c.middleware('action', doThing3);
-      c.middleware(doThing1);
-      c.middleware('thing', doThing2);
+      c.define('action', ['thing'], routestr('str'));
+      c.middleware('action', makemw('mw0'));
+      c.middleware(makemw('mw1'));
+      c.middleware('thing', makemw('mw2'));
       c.route('get', '/action', 'action');
 
-      var anapp = app();
-      var didCall = false;
-      anapp.on('get', function(route, mw, theAction) {
-        assert.deepEqual(mw, [doThing1, doThing2, doThing3]);
-        didCall = true;
-      });
-
-      c.attach(anapp);
-      assert(didCall === true);
+      req(express().use(c))
+        .get('/action')
+        .expect(200)
+        .expect('mw0mw1mw2')
+        .end(done);
     });
   })
 })
