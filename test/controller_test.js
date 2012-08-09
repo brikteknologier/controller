@@ -53,6 +53,17 @@ describe('Controller', function() {
       .expect('test')
       .end(done);
   });
+  it('should route with a prefix from middleware', function(done) {
+    var c = ctrl();
+    c.define('action', ['thing'], routestr('test'));
+    c.route('GET', '/action', 'action');
+
+    req(express().use('/prefix/', c))
+      .get('/prefix/action')
+      .expect(200)
+      .expect('test')
+      .end(done);
+  })
   describe('direct()', function() {
     it('should allow direct attachment', function(done) {
       var c = ctrl();
