@@ -4,7 +4,7 @@ var express = require('express');
 var req = require('supertest');
 
 var makemw = function(str) {
-  return function(req,res,next) { 
+  return function(req,res,next) {
     req.string = (req.string || '') + str;
     next();
   };
@@ -42,7 +42,7 @@ describe('Controller', function() {
       .expect('test')
       .end(done);
   });
-  it('should route with a prefix', function() {
+  it('should route with a prefix', function(done) {
     var c = ctrl({prefix: '/prefix/'});
     c.define('action', ['thing'], routestr('test'));
     c.route('GET', '/action', 'action');
@@ -54,7 +54,7 @@ describe('Controller', function() {
       .end(done);
   });
   describe('direct()', function() {
-    it('should allow direct attachment', function() {
+    it('should allow direct attachment', function(done) {
       var c = ctrl();
       c.direct('get', '/action', routestr('test'));
 
@@ -64,12 +64,12 @@ describe('Controller', function() {
         .expect('test')
         .end(done);
     })
-    it('should allow more than one direct attachment', function() {
+    it('should allow more than one direct attachment', function(done) {
       var c = ctrl();
       c.direct('get', '/action', makemw('getact'), routestr('1'));
       c.direct('post', '/other', makemw('get2'), routestr('2'));
-      
-      var app = express().use(c)
+
+      var app = express().use(c);
       req(app)
         .get('/action')
         .expect(200)
@@ -77,13 +77,13 @@ describe('Controller', function() {
         .end(function(err) {
           if (err) return done(err);
           req(app)
-            .get('/other')
+            .post('/other')
             .expect(200)
             .expect('get2')
             .end(done);
         });
     })
-    it('should allow direct attachment mixing groups and fns', function() {
+    it('should allow direct attachment mixing groups and fns', function(done) {
       var c = ctrl();
       c.middleware('gr1', makemw('1mw'));
       c.middleware('gr2', makemw('2mw'));
@@ -96,20 +96,7 @@ describe('Controller', function() {
     })
   }); 
   describe('middleware()', function() {
-    it('should return an array of middlewares when not adding', function() {
-      assert(Array.isArray(ctrl().middleware()));
-      var c = ctrl();
-      var fn = function() {};
-      c.middleware(fn)
-      assert.deepEqual(c.middleware(), [fn]);
-    });
-    it('should allow for groups', function() {
-      var c = ctrl();
-      var fn = function() {}
-      c.middleware('group', fn)
-      assert.deepEqual(c.middleware('group'), [fn]);
-    })
-    it('should apply grouped middleware', function() {
+    it('should apply grouped middleware', function(done) {
       var c = ctrl();
       c.define('action', ['thing'], routestr('thing'));
       c.middleware('thing', makemw('thingmw'));
@@ -121,7 +108,7 @@ describe('Controller', function() {
         .expect('thingmw')
         .end(done);
     });
-    it('should apply global middleware', function() {
+    it('should apply global middleware', function(done) {
       var c = ctrl();
       c.define('action', ['thing'], routestr('string'));
       c.middleware(makemw('otherthing'));
@@ -133,7 +120,7 @@ describe('Controller', function() {
         .expect('otherthing')
         .end(done);
     });
-    it('should apply handler specific middleware', function() {
+    it('should apply handler specific middleware', function(done) {
       var c = ctrl();
       c.define('action', ['thing'], routestr('string'));
       c.middleware('action', makemw('thingy'));
@@ -145,18 +132,18 @@ describe('Controller', function() {
         .expect('thingy')
         .end(done);
     });
-    it('should apply middleware in the correct order', function() {
+    it('should apply middleware in the correct order', function(done) {
       var c = ctrl();
       c.define('action', ['thing'], routestr('str'));
-      c.middleware('action', makemw('mw0'));
-      c.middleware(makemw('mw1'));
       c.middleware('thing', makemw('mw2'));
+      c.middleware(makemw('mw1'));
+      c.middleware('action', makemw('mw0'));
       c.route('get', '/action', 'action');
 
       req(express().use(c))
         .get('/action')
         .expect(200)
-        .expect('mw0mw1mw2')
+        .expect('mw1mw2mw0')
         .end(done);
     });
   })
