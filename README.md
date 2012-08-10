@@ -164,7 +164,7 @@ users.delete('/user/:id', 'delete');
 ---
 
 <a name="direct"/>
-### direct(method, path, [middleware/groups...,] handlerfn)
+### direct(method, path, [middleware*/groups*,] handlerfn)
 
 Directly route a function optionally with some middleware. This is essentially
 the same as adding a route directly to express. The difference is that handlers
