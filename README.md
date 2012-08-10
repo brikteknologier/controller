@@ -62,8 +62,8 @@ Then attach it to an instance of express, as if it were middleware:
 var app = require('express')();
 app.use(users);
 
-// It also works to attach it as a route, which will prefix all of the routes in
-// the controller with that path.
+// It also works to attach it with a route, which will prefix all of the routes 
+// in the controller with that path.
 
 app.use('/users/', users);
 ```
