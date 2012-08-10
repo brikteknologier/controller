@@ -171,14 +171,20 @@ describe('Controller', function() {
       var c = ctrl();
       c.define('action', ['thing'], routestr('str'));
       c.middleware('thing', makemw('mw2'));
+      c.middleware('thing', makemw('mw3'));
+      c.middleware('thing', makemw('mw4'));
       c.middleware(makemw('mw1'));
+      c.middleware(makemw('mw7'));
+      c.middleware(makemw('mw8'));
       c.middleware('action', makemw('mw0'));
+      c.middleware('action', makemw('mw5'));
+      c.middleware('action', makemw('mw6'));
       c.route('get', '/action', 'action');
 
       req(express().use(c))
         .get('/action')
         .expect(200)
-        .expect('mw1mw2mw0')
+        .expect('mw1mw7mw8mw2mw3mw4mw0mw5mw6')
         .end(done);
     });
   })

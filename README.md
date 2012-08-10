@@ -1,5 +1,5 @@
 # controller
-a small structural aid for creating express routes.
+a structural aid for creating express routes.
 
 ## example
 
@@ -30,22 +30,21 @@ users.route('get', '/user/:id', 'view-account');
 users.route('get', '/view-user/:id', 'view-account');
 
 // Attach to the app
-users.attach(app);
+app.use(users);
 ```
 
 ## documentation
 
-* [Create a new controller](#constructor)
+* [Usage](#constructor)
 * [define](#define) - define handlers
 * [middleware](#middleware) - add middleware for handlers
 * [route](#route) - route handlers
 * [direct](#direct) - directly route a handler function
-* [attach](#attach) - attach to express
 
 ---
 
 <a name="constructor"/>
-### Create a new controller
+### Usage
 
 Create a new controller by requiring controller and calling it as a function,
 like this:
@@ -55,21 +54,16 @@ var controller = require('controller');
 var users = controller();
 ```
 
-The `Controller` function can also take an `options` parameter. Available
-options are:
-
-* `prefix` a path to prefix all routes by. For example, you could set this to
-  `'/user/'`, resulting in `users.route('get', 'login', 'do-login');` routing to
-  `/user/login`. 
-
-Example with options:
+Then attach it to an instance of express, as if it were middleware:
 
 ```javascript
-var users = controller({ prefix: '/user/' });
+var app = require('express')();
+app.use(users);
 
-users.direct('get', '/:id', function(req,res) {
-  res.send(Users.read(req.params.id));
-})
+// It also works to attach it as a route, which will prefix all of the routes in
+// the controller with that path.
+
+app.use('/users/', users);
 ```
 
 ---
@@ -103,38 +97,40 @@ users.define('edit', ['require-login'], function(req, res) {
 ---
 
 <a name="middleware"/>
-### middleware([group, [middleware]])
+### middleware(group*, middleware*)
 
-Define some middleware for a group. If `middleware` is not defined, an array of 
-middleware for the group is returned instead. If `group` is not defined,
-the `'all'` group is returned - this is a group of middleware which applies to
-all handlers.
+Define some middleware(s) for a group(s). More than one middleware can be
+passed, as well as more than one group. If you were to pass two groups and two
+middlewares, each middleware would be added to both groups.
 
-The array that is returned can also be used to add more middleware.
-
-The order that middleware is added is as follows:
-
-1. Controller-wide middleware under the 'all' group.
-2. Group middleware, in the order the middleware was added, in the order the
-   groups were specified when the handler was defined.
-3. Handler-specific middleware that was defined only for this handler.
+`group` has some special values. `'all'` indicates that the middleware should
+apply to every route on this controller. If you pass the name of an action as
+the group, the middleware will apply to that action only.
 
 __Paramaters__
-* `group` *optional* - defaults to `'all'`
-* `middleware` *optional* - middleware to add to `group`.
+* `group` - defaults to `'all'`
+* `middleware` - middleware to add to `group`.
+
+__Middleware Execution Order__
+
+1. `'all'` grouped middleware is executed first.
+2. all other groups are then executed in the order they were added to the route
+   with `route` or `direct`. within the group, middlewares are executed in the
+   order they were added.
+3. route specific middleware is then executed in the order it was added.
 
 __Example__
 
 ```javascript
-users.middleware('require-login', function checkLoggedIn(req, res, next) {
-  // -> check if the user is logged in
+users.middleware('auth', function checkAuthd(req, res, next) {
+  // check some auth
 });
-
-users.middleware('require-login'); // -> [ [Function checkLoggedIn] ]
-users.middleware('require-login').push(function(req,res,next) {});
 
 // Define some middleware for all routes
 users.middleware(function(res, req, next) {});
+
+// Define some middleware for the 'getUser' action
+users.middleware('getUser', function(req, res, next) {});
 ```
 
 ---
@@ -142,7 +138,8 @@ users.middleware(function(res, req, next) {});
 <a name="route"/>
 ### route(method, path, handlerName)
 
-Route a handler. Handlers can be routed at more than one location.
+Route a handler. Handlers can be routed at more than one location. Just like
+express, you can also use this method directly on the controller (see example).
 
 __Parameters__
 * `method`. The http method, for example `'get'`, `'post'`, `'put'`, etc.
@@ -155,6 +152,11 @@ __Example__
 users.route('get', '/user/:id', 'view');
 users.route('post', '/user/:id', 'create');
 users.route('put', '/user/:id', 'edit');
+
+// or directly on the controller
+users.get('/user/:id', 'view')
+users.post('/user/:id', 'create');
+users.delete('/user/:id', 'delete');
 ```
 
 ---
@@ -186,12 +188,4 @@ users.direct('delete', '/user/:id', uselessMiddleware, 'require-login', function
 
 users.direct('get', '/user/do-something', function(req, res) {});
 ```
-
----
-
-<a name="attach"/>
-### attach(expressApp)
-
-Attach the routes to an express app. Note that after calling this function,
-making changes to the routes on the controller will do nothing.
 
