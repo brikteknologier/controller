@@ -42,6 +42,29 @@ describe('Controller', function() {
       .expect('test')
       .end(done);
   });
+  it('should allow chaining', function(done) {
+    var c = ctrl();
+    var app = express().use(
+      c.define('action', ['thing'], routestr('test'))
+       .define('action2', ['other_thing'], routestr('test2'))
+       .middleware('thing', makemw('thing1'))
+       .middleware('other_thing', makemw('thing2'))
+       .route('GET', '/action', 'action')
+       .route('GET', '/other', 'action2')
+    )
+    req(app)
+      .get('/action')
+      .expect(200)
+      .expect('thing1')
+      .end(function(err) {
+        if (err) return done(err);
+        req(app)
+          .get('/other')
+          .expect(200)
+          .expect('thing2')
+          .end(done);
+      });
+  })
   it('should route with a prefix from middleware', function(done) {
     var c = ctrl();
     c.define('action', ['thing'], routestr('test'));
