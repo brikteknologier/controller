@@ -99,7 +99,7 @@ users.define('edit', ['require-login'], function(req, res) {
 ---
 
 <a name="middleware"/>
-### middleware(group*, middleware*)
+### middleware(group\*, middleware\*)
 
 Define some middleware(s) for a group(s). More than one middleware can be
 passed, as well as more than one group. If you were to pass two groups and two
