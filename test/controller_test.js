@@ -42,17 +42,6 @@ describe('Controller', function() {
       .expect('test')
       .end(done);
   });
-  it('should route with a prefix', function(done) {
-    var c = ctrl({prefix: '/prefix/'});
-    c.define('action', ['thing'], routestr('test'));
-    c.route('GET', '/action', 'action');
-
-    req(express().use(c))
-      .get('/prefix/action')
-      .expect(200)
-      .expect('test')
-      .end(done);
-  });
   it('should route with a prefix from middleware', function(done) {
     var c = ctrl();
     c.define('action', ['thing'], routestr('test'));
@@ -63,6 +52,41 @@ describe('Controller', function() {
       .expect(200)
       .expect('test')
       .end(done);
+  })
+  it('should route with a prefix from middleware after adding', function(done) {
+    var c = ctrl();
+
+    var app = express().use('/prefix/', c);
+    c.define('action', ['thing'], routestr('test'));
+    c.route('GET', '/action', 'action');
+
+    req(app)
+      .get('/prefix/action')
+      .expect(200)
+      .expect('test')
+      .end(done);
+  })
+  it('should still have a the `route` fn after attachment', function(done) {
+    var c = ctrl();
+    c.define('action', ['thing'], routestr('test'));
+    c.route('GET', '/action', 'action');
+    var app = express().use('/prefix/', c)
+
+    req(app)
+      .get('/prefix/action')
+      .expect(200)
+      .expect('test')
+      .end(function(err) {
+        if (err) return done(err);
+
+        c.route('GET', '/action2', 'action');
+        req(app)
+          .get('/prefix/action2')
+          .expect(200)
+          .expect('test')
+          .end(done);
+      });
+
   })
   describe('direct()', function() {
     it('should allow direct attachment', function(done) {
