@@ -38,6 +38,7 @@ app.use(users);
 ## documentation
 
 * [Usage](#constructor)
+* [Middleware Groups](#groups)
 * [define](#define) - define handlers
 * [middleware](#middleware) - add middleware for handlers
 * [route](#route) - route handlers
@@ -69,6 +70,50 @@ app.use('/users/', users);
 ```
 
 ---
+
+<a name="groups"/>
+### Middleware Groups
+
+Controller introduces the idea of middleware groups. This allows to you specify
+named groups, and apply to middleware to every handler that is labelled with
+this group. For example, you might have bunch of handlers that require you to 
+be logged in, and some middleware which checks authentication. You could add
+all of the handlers to the 'require-login' group, and then add your auth
+middleware to the 'reguire-login' group. This will now apply that middleware to
+every handler in the group.
+
+In action:
+```javascript
+var stuff = controller();
+
+// define handlers with their groups
+stuff.define('sensitive-thing', ['require-login'], function(req,res){});
+stuff.define('secret-thing', ['require-login'], function(req,res){});
+
+// define middleware for the group
+stuff.middleware('require-login', function(req, res, next) {
+  if (isAuthenticated(req)) {
+    next();
+  } else {
+    res.send(403);
+  }
+})
+```
+
+__Special Groups__
+
+There are some special groups by default. The first one is `all`, which applies
+middleware to every action on this controller. Apart from that, every action
+name is also a middleware group, so you can add middleware to individual actions
+
+__Middleware Ordering__
+
+1. `'all'` grouped middleware is executed first.
+2. all other groups are then executed in the order they were added to the route
+   with `route` or `direct`. within the group, middlewares are executed in the
+   order they were added.
+3. route specific middleware is then executed in the order it was added.
+
 
 <a name="define"/>
 ### define(name, [groups], handler)
@@ -112,14 +157,6 @@ the group, the middleware will apply to that action only.
 __Paramaters__
 * `group` - defaults to `'all'`
 * `middleware` - middleware to add to `group`.
-
-__Middleware Execution Order__
-
-1. `'all'` grouped middleware is executed first.
-2. all other groups are then executed in the order they were added to the route
-   with `route` or `direct`. within the group, middlewares are executed in the
-   order they were added.
-3. route specific middleware is then executed in the order it was added.
 
 __Example__
 
