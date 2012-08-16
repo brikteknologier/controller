@@ -65,6 +65,23 @@ describe('Controller', function() {
           .end(done);
       });
   })
+  it('should allow app nesting', function(done) {
+    var c = ctrl();
+    var c0 = ctrl();
+
+    c.direct('get', '/action', routestr('test'));
+
+    var app = express();
+
+    c0.app.use('/second/', c);
+    app.use('/first/', c0);
+
+    req(app)
+      .get('/first/second/action')
+      .expect(200)
+      .expect('test')
+      .end(done);
+  });
   it('should route with a prefix from middleware', function(done) {
     var c = ctrl();
     c.define('action', ['thing'], routestr('test'));
