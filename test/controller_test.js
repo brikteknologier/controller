@@ -183,6 +183,30 @@ describe('Controller', function() {
         .expect('thingmw')
         .end(done);
     });
+    it('should apply grouped middleware with use()', function(done) {
+      var c = ctrl();
+      c.define('action', ['thing'], routestr('thing'));
+      c.use('thing', makemw('thingmw'));
+      c.route('get', '/action', 'action');
+
+      req(express().use(c))
+        .get('/action')
+        .expect(200)
+        .expect('thingmw')
+        .end(done);
+    });
+    it('should apply global middleware with use()', function(done) {
+      var c = ctrl();
+      c.define('action', ['thing'], routestr('string'));
+      c.use(makemw('otherthing'));
+      c.route('get', '/action', 'action');
+
+      req(express().use(c))
+        .get('/action')
+        .expect(200)
+        .expect('otherthing')
+        .end(done);
+    });
     it('should apply global middleware', function(done) {
       var c = ctrl();
       c.define('action', ['thing'], routestr('string'));
