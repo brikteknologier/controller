@@ -43,6 +43,7 @@ app.use(users);
 * [middleware](#middleware) - add middleware for handlers
 * [route](#route) - route handlers
 * [direct](#direct) - directly route a handler function
+* [Mounting controllers on controllers & middleware inheritance](#inheritance)
 
 ---
 
@@ -228,3 +229,94 @@ users.direct('delete', '/user/:id', uselessMiddleware, 'require-login', function
 users.direct('get', '/user/do-something', function(req, res) {});
 ```
 
+---
+
+<a name="inheritance"/>
+### Mounting controllers on controllers & middleware inheritance
+
+You can mount a controller on another controller like so:
+
+```javascript
+var appController = Controller();
+var usersController = Controller();
+
+appController.use('/users', usersController);
+```
+
+The path (in this case, `'/users'`) is optional, but it usually makes senses.
+
+Mounting controllers on each other in this way will cause middleware inheritance.
+In our above example, this means that `usersController` will inherit groups and
+middlewares from `appController`. If I set a global middleware on `appController`,
+`usersController` will get it too. This means that, for example, if I have a
+group `'auth'` on `appController`, I can use it as normal on `usersController`:
+
+```javascript
+usersController.define('editUser', ['auth'], function(req, res) { ... });
+appController.middleware('auth', function(req, res, next) { ... });
+```
+
+##### Middleware ordering when using inheritance
+
+The run order of middleware is slightly different when utilising inheritance.
+Normally, the global middleware runs first, then the middleware in the order 
+specified on `define`. When utilising inheritance, this is still true, but within
+a group, the lowest level of inheritance will run first.
+
+The easiest way to demonstrate this is to show an example. Lets say we have 3
+controllers inheriting from each other, such as this:
+
+```javascript
+usersController.use('/cats', catController);
+appController.use('/users', usersController);
+```
+
+Now, lets say that each of these 3 controllers have one global middleware:
+
+```javascript
+appController.middleware(function(req, res, next) { console.log('app'); next() });
+usersController.middleware(function(req, res, next) { console.log('users'); next() });
+catController.middleware(function(req, res, next) { console.log('meow'); next() });
+```
+
+Lets also say that each of these 3 controllers have one middleware in a group
+called `'auth'`.
+
+```javascript
+appController.middleware('auth', function(req, res, next) { console.log('app (auth)'); next() });
+usersController.middleware('auth', function(req, res, next) { console.log('users (auth)'); next() });
+catController.middleware('auth', function(req, res, next) { console.log('meow (auth)'); next() });
+```
+
+And we have a route which consumes these middlewares:
+
+```javascript
+catController.direct('get', '/meow', ['auth'], function(req, res) {
+  res.end('MEOW');
+});
+```
+
+When we send a request to `/users/cats/meow`, the output would be as follows:
+
+```
+app
+users
+meow
+app (auth)
+users (auth)
+meow (auth)
+```
+
+So the middleware group order was:
+
+```
+appController [global]
+usersController [global]
+meowController [global]
+appController [auth]
+usersController [auth]
+meowController [auth]
+```
+
+The ordering in which lower levels of middleware are called will not change,
+regardless of the order they are added in.
