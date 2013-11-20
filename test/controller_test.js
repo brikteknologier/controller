@@ -235,7 +235,7 @@ describe('Controller', function() {
       var c0 = ctrl();
       var c1 = ctrl();
 
-      c0.addSubController('/stuff', c1);
+      c0.use('/stuff', c1);
 
       c1.define('action', ['thing'], routestr('string'));
       c0.use(makemw('thingy'));
@@ -251,7 +251,7 @@ describe('Controller', function() {
       var c0 = ctrl();
       var c1 = ctrl();
 
-      c0.addSubController('/stuff', c1);
+      c0.use('/stuff', c1);
 
       c1.define('action', ['thing'], routestr('string'));
       c0.use('thing', makemw('thingy'));
@@ -267,7 +267,7 @@ describe('Controller', function() {
       var c0 = ctrl();
       var c1 = ctrl();
 
-      c0.addSubController('/stuff', c1);
+      c0.use('/stuff', c1);
 
       c1.define('action', ['thing'], routestr('string'));
       c1.use(makemw('mw1'));
