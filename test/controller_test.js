@@ -279,7 +279,7 @@ describe('Controller', function() {
       req(express().use(c0))
         .get('/stuff/action')
         .expect(200)
-        .expect('mw1mw4mw2mw3')
+        .expect('mw4mw1mw2mw3')
         .end(done);
     });
     it('should apply middleware in the correct order', function(done) {
