@@ -231,6 +231,22 @@ describe('Controller', function() {
         .expect('thingy')
         .end(done);
     });
+    it('should apply global middleware to subcontrollers', function(done) {
+      var c0 = ctrl();
+      var c1 = ctrl();
+
+      c0.addSubController('/stuff', c1);
+
+      c1.define('action', ['thing'], routestr('string'));
+      c0.use(makemw('thingy'));
+      c1.route('get', '/action', 'action');
+
+      req(express().use(c0))
+        .get('/stuff/action')
+        .expect(200)
+        .expect('thingy')
+        .end(done);
+    });
     it('should apply middleware in the correct order', function(done) {
       var c = ctrl();
       c.define('action', ['thing'], routestr('str'));
