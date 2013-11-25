@@ -282,6 +282,28 @@ describe('Controller', function() {
         .expect('mw4mw1mw2mw3')
         .end(done);
     });
+    it('should keep the same middleware for two routes', function(done) {
+      var c = ctrl();
+      c.define('action', ['thing'], routestr('str'));
+      c.middleware('thing', makemw('mw'));
+
+      c.get('/action-1', 'action');
+      c.get('/action-2', 'action');
+
+      var a = express().use(c);
+      req(a)
+        .get('/action-1')
+        .expect(200)
+        .expect('mw')
+        .end(function(err ) {
+          assert(!err);
+          req(a)
+            .get('/action-2')
+            .expect(200)
+            .expect('mw')
+            .end(done);
+        });
+    });
     it('should apply middleware in the correct order', function(done) {
       var c = ctrl();
       c.define('action', ['thing'], routestr('str'));
