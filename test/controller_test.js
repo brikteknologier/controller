@@ -317,7 +317,7 @@ describe('Controller', function() {
     });
     it('should apply middleware in the correct order', function(done) {
       var c = ctrl();
-      c.define('action', ['thing'], routestr('str'));
+      c.define('action', ['thing', makemw('mw9')], routestr('str'));
       c.middleware('thing', makemw('mw2'));
       c.middleware('thing', makemw('mw3'));
       c.middleware('thing', makemw('mw4'));
@@ -332,7 +332,7 @@ describe('Controller', function() {
       req(express().use(c))
         .get('/action')
         .expect(200)
-        .expect('mw1mw7mw8mw2mw3mw4mw0mw5mw6')
+        .expect('mw1mw7mw8mw2mw3mw4mw9mw0mw5mw6')
         .end(done);
     });
   })
