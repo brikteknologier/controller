@@ -153,7 +153,6 @@ __Special ordering conditions__
   specific precedence. Route-specific precedence only applies to the middleware
   added specifically for the current route.
 
-
 <a name="define"/>
 ### define(name, [groups], handler)
 
@@ -163,8 +162,11 @@ for routing.
 
 __Parameters__
 * `name` - the name of the handler
-* `groups` *(optional)* - the groups to add this handler to, for the purpose of
-  applying middleware to groups of handlers.
+* `middleware/groups` *(optional)* - an array of middleware or groups to add this
+  handler to. Array can contain either strings (middleware group) or functions
+  (inline route-specific middleware) or a mixture of the two. For more details
+  on the order in which these middlewares are called, see the [ordering](#ordering)
+  section.
 * `handler` - the function that is called when the route is visited.
 
 __Example__
