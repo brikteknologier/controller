@@ -35,7 +35,7 @@ describe('Controller', function() {
     var c = ctrl();
     c.define('action', ['thing'], routestr('test'));
     c.route('GET', '/action', 'action');
-    
+
     req(express().use(c))
       .get('/action')
       .expect(200)
@@ -169,12 +169,23 @@ describe('Controller', function() {
         .expect('1mwimw2mw')
         .end(done);
     })
-  }); 
+  });
   describe('middleware()', function() {
     it('should apply grouped middleware', function(done) {
       var c = ctrl();
       c.define('action', ['thing'], routestr('thing'));
       c.middleware('thing', makemw('thingmw'));
+      c.route('get', '/action', 'action');
+
+      req(express().use(c))
+        .get('/action')
+        .expect(200)
+        .expect('thingmw')
+        .end(done);
+    });
+    it('should apply ungrouped middleware', function(done) {
+      var c = ctrl();
+      c.define('action', [makemw('thingmw')], routestr('thing'));
       c.route('get', '/action', 'action');
 
       req(express().use(c))
