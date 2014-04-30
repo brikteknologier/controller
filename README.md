@@ -39,6 +39,7 @@ app.use(users);
 
 * [Usage](#constructor)
 * [Middleware Groups](#groups)
+* [Middleware Ordering](#ordering)
 * [define](#define) - define handlers
 * [middleware](#middleware) - add middleware for handlers
 * [route](#route) - route handlers
@@ -107,13 +108,50 @@ There are some special groups by default. The first one is `all`, which applies
 middleware to every action on this controller. Apart from that, every action
 name is also a middleware group, so you can add middleware to individual actions
 
+<a name="ordering"/>
 __Middleware Ordering__
 
-1. `'all'` grouped middleware is executed first.
+Middlewares are called in the following order:
+
+1. `'all'` grouped middleware is executed first. (in the order they were added)
 2. all other groups are then executed in the order they were added to the route
    with `route` or `direct`. within the group, middlewares are executed in the
    order they were added.
-3. route specific middleware is then executed in the order it was added.
+3. route specific middleware (including middleware added inline on a `define`
+   call) is then executed in the order it was added.
+
+For example:
+
+```javascript
+app.define('action', ['thing', MIDDLEWARE_1], routestr('str')); // inline middleware
+app.use('thing', MIDDLEWARE_2); // group middleware
+app.use('thing', MIDDLEWARE_3); // group middleware
+app.use(MIDDLEWARE_4); // global middleware
+app.use(MIDDLEWARE_5); // global middleware
+app.use('action', MIDDLEWARE_6); // route specific middleware
+app.use('action', MIDDLEWARE_7); // route specific middleware
+app.route('get', '/action', 'action');
+```
+
+The call order of middleware in this example would be:
+
+```
+1. MIDDLEWARE_4 (global middleware)
+2. MIDDLEWARE_5 (global middleware)
+3. MIDDLEWARE_2 (group middleware)
+4. MIDDLEWARE_3 (group middleware)
+5. MIDDLEWARE_1 (route-specific middleware)
+6. MIDDLEWARE_6 (route-specific middleware)
+7. MIDDLEWARE_7 (route-specific middleware)
+```
+
+__Special ordering conditions__
+
+* Route names can be group names too. In the previous example, if I was to specify
+  `'action'` as the group for another route, the middleware added for `'action'`—
+  both inline and procedurally—will be called with group precedence, not route-
+  specific precedence. Route-specific precedence only applies to the middleware
+  added specifically for the current route.
 
 
 <a name="define"/>
