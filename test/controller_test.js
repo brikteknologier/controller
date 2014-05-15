@@ -280,7 +280,7 @@ describe('Controller', function() {
 
       c0.use('/stuff', c1);
 
-      c1.define('action', ['thing'], routestr('string'));
+      c1.define('action', ['thing', makemw('mw5')], routestr('string'));
       c1.use(makemw('mw1'));
       c0.use('thing', makemw('mw2'));
       c1.use('thing', makemw('mw3'));
@@ -290,7 +290,7 @@ describe('Controller', function() {
       req(express().use(c0))
         .get('/stuff/action')
         .expect(200)
-        .expect('mw4mw1mw2mw3')
+        .expect('mw4mw1mw2mw3mw5')
         .end(done);
     });
     it('should keep the same middleware for two routes', function(done) {
