@@ -1,6 +1,6 @@
 {
   "name": "controller",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "an action controller for express",
   "main": "lib/controller.js",
   "directories": {
