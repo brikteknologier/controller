@@ -194,6 +194,18 @@ describe('Controller', function() {
         .expect('thingmw')
         .end(done);
     });
+    it('should override ungrouped middleware', function(done) {
+      var c = ctrl();
+      c.define('action', [makemw('thingmw')], routestr('thing'));
+      c.define('action', [makemw('thingmw2')], routestr('thing'));
+      c.route('get', '/action', 'action');
+
+      req(express().use(c))
+        .get('/action')
+        .expect(200)
+        .expect('thingmw2')
+        .end(done);
+    });
     it('should apply grouped middleware with use()', function(done) {
       var c = ctrl();
       c.define('action', ['thing'], routestr('thing'));
