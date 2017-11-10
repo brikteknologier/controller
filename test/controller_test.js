@@ -73,7 +73,7 @@ describe('Controller', function() {
 
     var app = express();
 
-    c0.app.use('/second/', c);
+    c0.use('/second/', c);
     app.use('/first/', c0);
 
     req(app)
